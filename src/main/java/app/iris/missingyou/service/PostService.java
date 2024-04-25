@@ -28,6 +28,7 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final MemberService memberService;
     private final ImgStorageService imgStorageService;
+    private final FCMService fcmService;
 
     public Post get(Long postId) {
         return postRepository.findById(postId)
@@ -58,6 +59,8 @@ public class PostService {
         imgStorageService.createImage(requestDto.getImages(), post);
 
         String genImageUrl = imgStorageService.createGenImage(post);
+
+        fcmService.sendPush(post.getId(), requestDto.getRegion());
 
         return new PostCreateResponseDto(genImageUrl, post.getId());
     }

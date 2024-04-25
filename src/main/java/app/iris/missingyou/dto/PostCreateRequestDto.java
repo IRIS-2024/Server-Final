@@ -32,6 +32,9 @@ public class PostCreateRequestDto {
     @Schema( type = "string", example = "서울시 용산구 갈월동 24")
     private String address;
 
+    @Schema(type = "string", example = "서울 강남구")
+    private String region;
+
     @NotBlank
     private double latitude;
     @NotBlank
