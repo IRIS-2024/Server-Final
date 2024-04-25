@@ -1,5 +1,11 @@
 package app.iris.missingyou.entity;
 
+import app.iris.missingyou.exception.CustomException;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.springframework.http.HttpStatus;
+
 public enum Region {
     //서울
     SEOUL_GANGNAMGU("서울 강남구"),
@@ -30,11 +36,21 @@ public enum Region {
 
     private final String name;
 
-    Region(String name) {
+    Region(String name){
         this.name = name;
     }
 
+    @JsonValue
     public String getName() {
         return name;
+    }
+
+    @JsonCreator
+    public static Region fromName(@JsonProperty("name") String name) {
+        for(Region region : values()) {
+            if(region.getName().equals(name))
+                return region;
+        }
+        throw new CustomException(HttpStatus.BAD_REQUEST, "지원되지 않는 지역: "+name);
     }
 }
