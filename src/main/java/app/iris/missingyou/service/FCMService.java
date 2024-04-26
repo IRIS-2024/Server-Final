@@ -24,6 +24,15 @@ public class FCMService {
     private final MemberService memberService;
     private final PushRepository pushRepository;
 
+    public String getRegionInfo(CustomUserDetails userDetails) {
+        Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
+        Push push = pushRepository.findByMemberId(member.getId()).orElseThrow(
+                ()->new CustomException(HttpStatus.NOT_FOUND, "해당 자원을 찾을 수 없습니다.")
+        );
+
+        return push.getRegion().getName();
+    }
+
     public void setPushInfo(CustomUserDetails userDetails, PushInfoDto dto) {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
         Push push = pushRepository.findByMemberId(member.getId()).orElse(new Push(member));
