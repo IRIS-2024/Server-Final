@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,13 +29,13 @@ public class FCMService {
 
     public String getRegionInfo(CustomUserDetails userDetails) {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
-        Push push = pushRepository.findByMemberId(member.getId()).orElseThrow(
-                ()->new CustomException(HttpStatus.NOT_FOUND, "해당 자원을 찾을 수 없습니다.")
-        );
 
-        return push.getRegion() != null ? push.getRegion().getName() : null;
+        return pushRepository.findByMemberId(member.getId()).orElseThrow(
+                ()->new CustomException(HttpStatus.NOT_FOUND, "해당 자원을 찾을 수 없습니다.")
+        ).getRegion().getName();
     }
 
+    @Transactional
     public void setPushInfo(CustomUserDetails userDetails, PushInfoDto dto) {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
         Push push = pushRepository.findByMemberId(member.getId()).orElse(new Push(member));
@@ -48,6 +49,7 @@ public class FCMService {
         pushRepository.save(push);
     }
 
+    @Transactional
     public void delete(CustomUserDetails userDetails) {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
         Push push = pushRepository.findByMemberId(member.getId()).orElseThrow(
