@@ -39,19 +39,12 @@ public class FCMService {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
         Push push = pushRepository.findByMemberId(member.getId()).orElse(new Push(member));
 
-        Region region = Region.fromName(dto.getRegion());
-
+        if(dto.getRegion() != null){
+            Region region = Region.fromName(dto.getRegion());
+            push.setRegion(region);
+        }
         push.setDeviceToken(dto.getDeviceToken());
-        push.setRegion(region);
 
-        pushRepository.save(push);
-    }
-
-    public void setDeviceToken(CustomUserDetails userDetails, String deviceToken) {
-        Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
-        Push push = pushRepository.findByMemberId(member.getId()).orElse(new Push(member));
-
-        push.setDeviceToken(deviceToken);
         pushRepository.save(push);
     }
 
