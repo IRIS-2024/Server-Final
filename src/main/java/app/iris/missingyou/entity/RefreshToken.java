@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 public class RefreshToken extends TimeStamp{
     public  RefreshToken (Member member, String token){
         this.member = member;
-        this.hashedToken = token;
+        this.refreshToken = token;
     }
 
     @Id
@@ -19,13 +19,13 @@ public class RefreshToken extends TimeStamp{
     private Member member;
 
     @Column(nullable = false)
-    private String hashedToken;
+    private String refreshToken;
 
-    public void setHashedToken(String hashedToken){
-        this.hashedToken = hashedToken;
+    public void setRefreshToken(String refreshToken){
+        this.refreshToken = refreshToken;
     }
 
-    public String getHashedToken(){
-        return hashedToken;
+    public String getRefreshToken(){
+        return refreshToken;
     }
 }

@@ -31,14 +31,12 @@ public class MemberService {
     public TokenDto login(Member member) {
         String access = tokenProvider.generateAccessToken(member.getId(), member.getName());
         String refresh = tokenProvider.generateRefreshToken(member.getId());
-        String hashed = passwordEncoder.encode(refresh);
 
         RefreshToken refreshToken = refreshTokenRepository.findByMemberId(member.getId()).orElse(null);
         if(refreshToken != null)
-            refreshToken.setHashedToken(hashed);
+            refreshToken.setRefreshToken(refresh);
         else
-            refreshToken = new RefreshToken(member, hashed);
-
+            refreshToken = new RefreshToken(member, refresh);
 
         refreshTokenRepository.save(refreshToken);
 
@@ -53,7 +51,7 @@ public class MemberService {
         RefreshToken stored = refreshTokenRepository.findByMemberId(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "토큰 정보를 찾을 수 없습니다."));
 
-        if(!passwordEncoder.matches(refreshToken, stored.getHashedToken()))
+        if(!refreshToken.equals(stored.getRefreshToken()))
             throw new CustomException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다. 다시 로그인해주세요.");
 
         String name = memberRepository.findById(id)
@@ -62,8 +60,7 @@ public class MemberService {
 
         String access = tokenProvider.generateAccessToken(id, name);
         String refresh = tokenProvider.generateRefreshToken(id);
-        String hashed = passwordEncoder.encode(refresh);
-        stored.setHashedToken(hashed);
+        stored.setRefreshToken(refreshToken);
         refreshTokenRepository.save(stored);
 
         return new TokenDto(access, refresh);
