@@ -17,10 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -39,7 +36,7 @@ public class MemberController {
     }
 
     @Operation(summary = "푸시 알림 정보 생성/수정", security = { @SecurityRequirement(name = "bearerAuth")})
-    @PutMapping(value = "/members/push", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/members/push", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> postPushInfo(
             @RequestBody PushInfoDto dto
             ) {
