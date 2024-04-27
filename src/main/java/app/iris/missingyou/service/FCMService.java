@@ -48,6 +48,14 @@ public class FCMService {
         pushRepository.save(push);
     }
 
+    public void setDeviceToken(CustomUserDetails userDetails, String deviceToken) {
+        Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
+        Push push = pushRepository.findByMemberId(member.getId()).orElse(new Push(member));
+
+        push.setDeviceToken(deviceToken);
+        pushRepository.save(push);
+    }
+
     public void delete(CustomUserDetails userDetails) {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
         Push push = pushRepository.findByMemberId(member.getId()).orElseThrow(

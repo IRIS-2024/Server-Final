@@ -49,6 +49,18 @@ public class MemberController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "디바이스 토큰(기기 등록 토큰) 생성/수정(refresh)", security = { @SecurityRequirement(name = "bearerAuth")})
+    @PutMapping(value = "/members/push/device-token", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> postPushInfo(
+            @RequestBody String deviceToken
+    ) {
+        CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        pushService.setDeviceToken(principal, deviceToken);
+
+        return ResponseEntity.ok().build();
+    }
+
     @Operation(summary = "푸시 알림 정보 삭제", security = { @SecurityRequirement(name = "bearerAuth")})
     @DeleteMapping(value = "/members/push")
     public ResponseEntity<?> postPushInfo() {
