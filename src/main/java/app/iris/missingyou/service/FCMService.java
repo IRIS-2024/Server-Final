@@ -32,14 +32,14 @@ public class FCMService {
                 ()->new CustomException(HttpStatus.NOT_FOUND, "해당 자원을 찾을 수 없습니다.")
         );
 
-        return push.getRegion().getName();
+        return push.getRegion() != null ? push.getRegion().getName() : null;
     }
 
     public void setPushInfo(CustomUserDetails userDetails, PushInfoDto dto) {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
         Push push = pushRepository.findByMemberId(member.getId()).orElse(new Push(member));
 
-        if(dto.getRegion() != null){
+        if(!dto.getRegion().isEmpty()){
             Region region = Region.fromName(dto.getRegion());
             push.setRegion(region);
         }

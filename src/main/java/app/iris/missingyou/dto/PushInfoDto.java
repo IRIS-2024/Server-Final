@@ -9,7 +9,6 @@ import lombok.*;
 @Getter
 @Setter
 public class PushInfoDto {
-
     private String region;
     @NotNull
     private String deviceToken;

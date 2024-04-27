@@ -19,7 +19,6 @@ public class Push extends TimeStamp {
     private String deviceToken;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Region region;
 
     public Push (Member member) {
