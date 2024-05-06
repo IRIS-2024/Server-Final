@@ -60,7 +60,7 @@ public class PostService {
 
         String genImageUrl = imgStorageService.createGenImage(post);
 
-        fcmService.sendPush(post.getId(), requestDto.getRegion());
+        fcmService.sendPush(post.getId(), requestDto.getRegion(), member.getId());
 
         return new PostCreateResponseDto(genImageUrl, post.getId());
     }

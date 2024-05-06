@@ -41,11 +41,6 @@ public class AppConfig {
     }
 
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
     public Storage storage(@Value("${spring.cloud.gcp.credentials.location}") String secretPath ,@Value("${spring.cloud.gcp.project-id}") String projectId) throws IOException {
         PathResource resource = new PathResource(secretPath);
         GoogleCredentials credentials = GoogleCredentials.fromStream(resource.getInputStream());

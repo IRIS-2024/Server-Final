@@ -3,16 +3,16 @@ package app.iris.missingyou.controller;
 import app.iris.missingyou.dto.TokenDto;
 import app.iris.missingyou.entity.Member;
 import app.iris.missingyou.entity.Platform;
+import app.iris.missingyou.security.CustomUserDetails;
 import app.iris.missingyou.security.GoogleUser;
 import app.iris.missingyou.security.OAuth2Service;
 import app.iris.missingyou.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -29,6 +29,15 @@ public class AuthController {
         TokenDto dto = memberService.login(member);
 
         return ResponseEntity.ok().body(dto);
+    }
+
+    @Operation(summary = "로그아웃", security = { @SecurityRequirement(name = "bearerAuth")})
+    @PostMapping(value = "/auth/logout")
+    public ResponseEntity<?> logout() {
+        CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        memberService.logout(principal);
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "refresh token을 이용한 토큰 재발급")
