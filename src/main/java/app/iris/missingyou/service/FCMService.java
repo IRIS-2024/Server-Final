@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -90,6 +91,29 @@ public class FCMService {
             BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
         } catch (FirebaseMessagingException e) {
             log.error("fail to send message: fcm[ " + e.getErrorCode()+"]"+ e.getMessage() );
+        }
+    }
+
+    @Async
+    public void requestPush(Long pid) {
+        try{
+            String token = pushRepository.findPostAuthorDeviceToken(pid).get();
+            Message message = Message.builder()
+                    .putData("pid", pid.toString())
+                    .setNotification(Notification.builder()
+                            .setTitle("제보 댓글 등록 알림")
+                            .setBody("실종 정보글에 새로운 제보 댓글이 등록되었습니다.")
+                            .build())
+                    .setToken(token)
+                    .build();
+            String response = FirebaseMessaging.getInstance().send(message);
+            log.info("제보 댓글 알림 요청 성공 pid: {}", pid);
+        } catch (FirebaseMessagingException e) {
+            log.error("fail to send message: fcm[ " + e.getErrorCode()+"]"+ e.getMessage() );
+        } catch (NoSuchElementException e) {
+            log.warn("fail to send message: token was not found pid: {}", pid);
+        } catch (Exception e) {
+            log.error("fail to send message: "+e.getMessage());
         }
     }
 }

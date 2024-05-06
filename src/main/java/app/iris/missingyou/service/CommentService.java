@@ -16,6 +16,7 @@ import app.iris.missingyou.repository.PostRepository;
 import app.iris.missingyou.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.InputStreamSource;
@@ -37,14 +38,19 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class CommentService {
+    @Value("${ml.server.url}")
+    private String MLServer;
+
     private final WebClient webClient;
 
     private final CommentRepository commentRepository;
     private final LocationRepository locationRepository;
     private final PostRepository postRepository;
+
     private final PostService postService;
     private final MemberService memberService;
     private final ImgStorageService imgStorageService;
+    private final FCMService fcmService;
 
     @Transactional
     public Comment create(CustomUserDetails userDetails, CommentCreateRequestDto requestDto) {
@@ -71,9 +77,9 @@ public class CommentService {
         List<String> urlList2 = imgStorageService.createImage(requestDto.getImages(), comment);
         List<InputStreamSource> file1List = getImages(urlList2);
 
-        double accuracy = requestAccuracy(file1List, file2List);
-        comment.setAccuracy(accuracy);
+        comment.setAccuracy(requestAccuracy(file1List, file2List));
 
+        fcmService.requestPush(post.getId());
         return commentRepository.save(comment);
     }
 
@@ -95,12 +101,12 @@ public class CommentService {
         map.put("file2", file1List);
 
         AccuracyDto response = webClient.post()
-                .uri("http://104.199.126.137:8000/verify-faces")
+                .uri(MLServer+"/verify-faces")
                 .header("Content-Type", "multipart/form-data")
                 .body(BodyInserters.fromMultipartData(map))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, res -> res.bodyToMono(String.class)
-                        .flatMap(errorBody -> Mono.error(new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, errorBody))))
+                        .flatMap(errorBody -> Mono.error(new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "제보 사진의 일치율을 계산하는 데 실패했습니다."))))
                 .bodyToMono(AccuracyDto.class)
                 .block();
         return response.getConfidence_percent();
