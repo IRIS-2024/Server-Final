@@ -9,7 +9,6 @@ import app.iris.missingyou.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -35,8 +34,8 @@ public class MemberController {
         return ResponseEntity.ok().body(dto);
     }
 
-    @Operation(summary = "푸시 알림 정보 생성/수정", security = { @SecurityRequirement(name = "bearerAuth")})
-    @PostMapping(value = "/members/push", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "푸시 알림 정보 수정", security = { @SecurityRequirement(name = "bearerAuth")})
+    @PatchMapping(value = "/members/push", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> postPushInfo(
             @RequestBody PushInfoDto dto
             ) {
@@ -47,19 +46,8 @@ public class MemberController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "푸시 알림 정보 삭제", security = { @SecurityRequirement(name = "bearerAuth")})
-    @DeleteMapping(value = "/members/push")
-    public ResponseEntity<?> postPushInfo() {
-        CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        pushService.delete(principal);
-
-        return ResponseEntity.ok().build();
-    }
-
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "요청 성공"),
-            @ApiResponse(responseCode = "204", description = "요청 성공(관심 지역이 설정되어 있지 않음)"),
             @ApiResponse(responseCode = "403", description = "인증 헤더 누락"),
             @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = { @Content(mediaType = "application/json",
@@ -71,9 +59,6 @@ public class MemberController {
 
         String regionName = pushService.getRegionInfo(principal);
 
-        if(regionName != null)
-            return ResponseEntity.ok().body(regionName);
-
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().body(regionName);
     }
 }

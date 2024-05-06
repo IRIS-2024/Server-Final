@@ -31,46 +31,44 @@ public class FCMService {
     public String getRegionInfo(CustomUserDetails userDetails) {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
 
-        return pushRepository.findByMemberId(member.getId()).orElseThrow(
+        Region region = pushRepository.findByMemberId(member.getId()).orElseThrow(
                 ()->new CustomException(HttpStatus.NOT_FOUND, "해당 자원을 찾을 수 없습니다.")
-        ).getRegion().getName();
+        ).getRegion();
+
+        return  region == null ? null : region.getName();
     }
 
     @Transactional
     public void setPushInfo(CustomUserDetails userDetails, PushInfoDto dto) {
         Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
-        Push push = pushRepository.findByMemberId(member.getId()).orElse(new Push(member));
+        Push push = pushRepository.findByMemberId(member.getId()).orElseThrow(
+                ()->new CustomException(HttpStatus.NOT_FOUND, "해당 자원을 찾을 수 없습니다.")
+        );
 
-        if(!dto.getRegion().isEmpty()){
-            Region region = Region.fromName(dto.getRegion());
-            push.setRegion(region);
+        if (dto.getDeviceToken() == null) {
+            push.setRegion(null);
+            return;
+        }
+
+        if (dto.getRegion() != null) {
+            push.setRegion(Region.fromName(dto.getRegion()));
         }
         push.setDeviceToken(dto.getDeviceToken());
 
         pushRepository.save(push);
     }
 
-    @Transactional
-    public void delete(CustomUserDetails userDetails) {
-        Member member = memberService.findById(Long.parseLong(userDetails.getUsername()));
-        Push push = pushRepository.findByMemberId(member.getId()).orElseThrow(
-                ()->new CustomException(HttpStatus.NOT_FOUND, "해당 자원을 찾을 수 없습니다.")
-        );
-
-        pushRepository.delete(push);
-    }
-
     @Async
-    public void sendPush(Long pid, String regionName) {
+    public void sendPush(Long pid, String regionName, Long memberId) {
         try {
             Region region = Region.fromName(regionName);
-            Page<String> page = pushRepository.findAllDeviceToken(region, PageRequest.of(0, 500));
-            while (page.hasNext()) {
+            Page<String> page = pushRepository.findAllDeviceToken(region, memberId, PageRequest.of(0, 500));
+
+            for(int i=0; i<page.getTotalPages(); i++) {
                 List<String> deviceTokenList = page.getContent();
                 requestPush(pid, regionName, deviceTokenList);
-
                 Pageable pageable = page.nextPageable();
-                page = pushRepository.findAllDeviceToken(region, pageable);
+                page = pushRepository.findAllDeviceToken(region, memberId ,pageable);
             }
         } catch (Exception e) {
             log.error("fail to send message: "+e.getMessage());
@@ -78,7 +76,7 @@ public class FCMService {
     }
 
     @Async
-    public void requestPush(Long pid,String regionName ,List<String> tokenList) {
+    public void requestPush(Long pid, String regionName ,List<String> tokenList) {
         try {
             MulticastMessage message = MulticastMessage.builder()
                     .setNotification(Notification.builder()
@@ -89,6 +87,7 @@ public class FCMService {
                     .addAllTokens(tokenList)
                     .build();
             BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
+            log.info("{}/{} notifications have been sent for posts on pid{}.", response.getSuccessCount(), tokenList.size(), pid);
         } catch (FirebaseMessagingException e) {
             log.error("fail to send message: fcm[ " + e.getErrorCode()+"]"+ e.getMessage() );
         }
