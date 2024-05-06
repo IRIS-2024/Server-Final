@@ -15,7 +15,6 @@ public class Push extends TimeStamp {
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     private Member member;
 
-    @Column(nullable = false)
     private String deviceToken;
 
     @Enumerated(EnumType.STRING)

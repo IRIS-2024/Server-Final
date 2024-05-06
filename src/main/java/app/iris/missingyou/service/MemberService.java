@@ -4,14 +4,17 @@ import app.iris.missingyou.dto.MemberInfoDto;
 import app.iris.missingyou.dto.TokenDto;
 import app.iris.missingyou.entity.Member;
 import app.iris.missingyou.entity.Platform;
+import app.iris.missingyou.entity.Push;
 import app.iris.missingyou.entity.RefreshToken;
 import app.iris.missingyou.exception.CustomException;
 import app.iris.missingyou.repository.MemberRepository;
+import app.iris.missingyou.repository.PushRepository;
 import app.iris.missingyou.repository.RefreshTokenRepository;
 import app.iris.missingyou.security.CustomUserDetails;
 import app.iris.missingyou.security.GoogleUser;
 import app.iris.missingyou.security.jwt.TokenProvider;
 import app.iris.missingyou.security.jwt.TokenValidator;
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,9 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PushRepository pushRepository;
     private final TokenProvider tokenProvider;
     private final TokenValidator tokenValidator;
-    private final BCryptPasswordEncoder passwordEncoder;
 
     @Transactional
     public TokenDto login(Member member) {
@@ -41,6 +44,22 @@ public class MemberService {
         refreshTokenRepository.save(refreshToken);
 
         return new TokenDto(access, refresh);
+    }
+
+    @Transactional
+    public void logout(CustomUserDetails userDetails) {
+        Member member = findById(Long.parseLong(userDetails.getUsername()));
+        RefreshToken refreshToken = refreshTokenRepository.findByMemberId(member.getId()).orElse(null);
+        Push push = pushRepository.findByMemberId(member.getId()).orElse(null);
+
+        if(refreshToken != null) {
+            refreshToken.setRefreshToken(null);
+            refreshTokenRepository.save(refreshToken);
+        }
+        if(push != null) {
+            push.setDeviceToken(null);
+            pushRepository.save(push);
+        }
     }
 
     @Transactional
@@ -68,8 +87,13 @@ public class MemberService {
 
     @Transactional
     public Member findOrJoin(GoogleUser user, Platform platform) {
-        return memberRepository.findByEmailAndPlatform(user.getEmail(), platform)
-                .orElseGet(()->memberRepository.save(user.toMember()));
+        Member member = memberRepository.findByEmailAndPlatform(user.getEmail(), platform)
+                .orElse(null);
+        if(member == null) {
+            member = memberRepository.save(user.toMember());
+            pushRepository.save(new Push(member));
+        }
+        return member;
     }
 
     public Member findById(Long id){

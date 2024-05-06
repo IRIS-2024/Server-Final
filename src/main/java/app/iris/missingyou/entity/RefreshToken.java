@@ -18,7 +18,7 @@ public class RefreshToken extends TimeStamp{
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     private Member member;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String refreshToken;
 
     public void setRefreshToken(String refreshToken){
